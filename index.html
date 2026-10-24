@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Compose pixel-perfect game music with Druid Isle, a free browser chiptune studio with four retro voices, island moods, a piano roll, and WAV export.">
+  <meta name="theme-color" content="#0c1320">
+  <title>Druid Isle — Chiptune Studio</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+<noscript><p class="panel">Enable JavaScript to compose and play music in Druid Isle.</p></noscript>
+<a class="skip-link" href="#studio">Skip to studio</a>
+<main class="wrap" id="studio">
+  <header class="top">
+    <div class="brand">
+      <h1>DRUID ISLE</h1>
+      <p>Chiptune studio · four NES-style voices for the island</p>
+    </div>
+    <div class="transport">
+      <button class="btn play" id="playBtn" aria-keyshortcuts="Space">Play</button>
+      <label class="field"><span>Tempo</span><input type="number" id="bpm" min="50" max="220" step="1"></label>
+      <label class="field"><span>Key</span><select id="key"></select></label>
+      <label class="field"><span>Scale</span><select id="scale"></select></label>
+      <label class="field"><span>Bars</span><select id="bars"><option value="2">2</option><option value="4">4</option><option value="8">8</option></select></label>
+    </div>
+  </header>
+
+  <div class="stage">
+    <section>
+      <div class="scene-box"><canvas id="scene" width="256" height="112" role="img" aria-label="Animated pixel island that reacts to the music"></canvas></div>
+      <div class="caption"><strong id="moodName">Dawn Grove</strong><span id="moodBlurb"></span><span class="now" id="nowInfo"></span></div>
+      <div class="scopes" id="scopes"></div>
+    </section>
+
+    <aside class="panel moods">
+      <h2>Island moods</h2>
+      <div class="mood-grid" id="moodGrid"></div>
+      <div class="composer">
+        <div class="seedrow">
+          <label class="field"><span>Seed</span><input type="number" id="seed" min="1" max="999999"></label>
+          <button class="btn" id="seedApply" title="Compose from this seed">Use seed</button>
+        </div>
+        <button class="btn big" id="composeBtn">Compose new tune</button>
+        <p class="note" style="margin:0">A mood sets tempo, scale, voices and patterns. The same seed always gives the same tune.</p>
+      </div>
+    </aside>
+  </div>
+
+  <section class="panel tracker">
+    <div class="tracker-head">
+      <div class="tabs" id="tabs" role="tablist"></div>
+      <p class="hint">Click a cell to place a note, drag right to hold it, click a note to erase it. Click a chord above the grid to change it; bass and harmony follow. Space plays.</p>
+    </div>
+    <div class="chopts" id="chopts"></div>
+    <div class="gridwrap" id="gridwrap"><canvas id="gridLabels"></canvas><canvas id="grid" aria-label="Piano roll note editor"></canvas></div>
+  </section>
+
+  <section class="lower">
+    <div class="panel">
+      <h2>Mix</h2>
+      <div class="sliders">
+        <label class="sl"><span class="lbl">Master</span><input type="range" id="mixVol" min="0" max="1" step="0.01"><output id="mixVolO"></output></label>
+        <label class="sl"><span class="lbl">Crunch</span><input type="range" id="mixCrunch" min="0" max="100" step="1"><output id="mixCrunchO"></output></label>
+        <label class="sl"><span class="lbl">Echo</span><input type="range" id="mixEcho" min="0" max="1" step="0.01"><output id="mixEchoO"></output></label>
+        <label class="sl"><span class="lbl">Swing</span><input type="range" id="mixSwing" min="0" max="0.6" step="0.01"><output id="mixSwingO"></output></label>
+      </div>
+      <p class="note">Crunch lowers the bit depth for a grittier, older-console sound.</p>
+    </div>
+
+    <div class="panel export">
+      <h2>Export</h2>
+      <label class="field"><span>Loop copies</span>
+        <select id="loops"><option value="1">1 (game loop)</option><option value="2">2</option><option value="4">4</option></select></label>
+      <div class="row">
+        <button class="btn" id="exportWav" style="--c:var(--lead)">Render .wav</button>
+        <button class="btn" id="saveJson">Save song</button>
+        <button class="btn" id="loadSong" type="button">Load song</button>
+        <input type="file" id="loadInput" accept=".json,application/json">
+      </div>
+      <p class="note">Renders exactly what you hear, so solo a track first to export a stem. Exported audio is trimmed to the loop length for use in your game engine.</p>
+    </div>
+
+    <div class="panel sfx">
+      <h2>Sound effects</h2>
+      <div class="sfx-presets" id="sfxPresets"></div>
+      <div class="sfx-body">
+        <canvas id="sfxWave" width="320" height="64" aria-label="Waveform of the current sound effect"></canvas>
+        <label class="field"><span>Voice</span><select id="sfxWaveSel">
+          <option value="p125">Pulse 12.5%</option><option value="p25">Pulse 25%</option><option value="p50">Pulse 50%</option><option value="tri">Triangle</option><option value="noise">Noise</option><option value="metal">Metal noise</option></select></label>
+        <label class="field"><span>Envelope</span><select id="sfxEnv"><option value="pluck">Pluck</option><option value="hold">Hold</option><option value="swell">Swell</option><option value="fade">Fade</option></select></label>
+        <label class="field"><span>Start pitch <output id="sfxF0O"></output></span><input type="range" id="sfxF0" min="0" max="1000" step="1"></label>
+        <label class="field"><span>End pitch <output id="sfxF1O"></output></span><input type="range" id="sfxF1" min="0" max="1000" step="1"></label>
+        <label class="field"><span>Length <output id="sfxDurO"></output></span><input type="range" id="sfxDur" min="0.03" max="1.5" step="0.01"></label>
+        <label class="field"><span>Vibrato <output id="sfxVibO"></output></span><input type="range" id="sfxVib" min="0" max="1" step="0.01"></label>
+        <label class="field"><span>Pitch slide</span><select id="sfxSlide"><option value="none">None</option><option value="lin">Straight</option><option value="exp">Curved</option></select></label>
+        <label class="field"><span>Arpeggio</span><select id="sfxArp"><option value="none">None</option><option value="up">Major rise</option><option value="upmin">Minor rise</option><option value="fifth">Fifth hop</option><option value="octave">Octave hop</option><option value="chime">Chime</option><option value="trill">Trill</option><option value="fall">Falling</option></select></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="sfxPlay" style="--c:var(--harm)">Play</button>
+        <button class="btn" id="sfxMutate">Mutate</button>
+        <button class="btn" id="sfxExport">Render .wav</button>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">Made for little worlds. Create, play, and export in your browser. <span>Your song is saved on this device.</span></footer>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+
+</body>
+</html>
